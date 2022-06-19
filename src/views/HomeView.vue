@@ -20,7 +20,7 @@ function getMessageComponent(type: MessageType) {
 
 <template>
 	<main class="grid place-content-center h-screen">
-		<h1 class="text-7xl text-center mb-6">DigiFunc&trade;</h1>
+		<h1 class="text-7xl text-center mb-6">DigiFunk&trade;</h1>
 		<div class="flex flex-col gap-2">
 			<component
 				v-for="msg in messages"
