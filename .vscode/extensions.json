@@ -3,6 +3,8 @@
     "vue.volar",
     "vue.vscode-typescript-vue-plugin",
     "bradlc.vscode-tailwindcss",
-    "esbenp.prettier-vscode"
+    "esbenp.prettier-vscode",
+    "formulahendry.auto-rename-tag",
+    "antfu.iconify"
 ]
 }
