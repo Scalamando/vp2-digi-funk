@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import { usePlanesStore, type Plane } from "./planes";
 
 export enum MessageType {
 	Pushback = "PB",
@@ -7,10 +8,16 @@ export enum MessageType {
 }
 
 export enum MessageOrigin {
-	System,
-	Pilot,
-	ThisATC,
-	OtherATC,
+	System = "System",
+	Pilot = "Pilot",
+	ThisATC = "ThisATC",
+	OtherATC = "OtherATC",
+}
+
+export enum MessageAcknowledgement {
+	Pilot = "Pilot",
+	ATC = "ATC",
+	Both = "Both",
 }
 
 export interface Message {
@@ -19,31 +26,42 @@ export interface Message {
 	type: MessageType;
 	origin: MessageOrigin;
 	zone: string;
+	acknowledgement: MessageAcknowledgement;
 	parameters?: Record<string, string | number>;
+}
+
+function generateMessages(planes: Plane[]) {
+	const oneOfEnum = <T>(obj: T) => {
+		const values = Object.values(obj) as T[keyof T][];
+		return values[Math.floor(Math.random() * values.length)];
+	};
+
+	const oneOfArr = <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+
+	return Array.from(
+		{ length: 3 },
+		() =>
+			({
+				id: lastId++,
+				planeId: oneOfArr(planes).id,
+				type: oneOfEnum(MessageType),
+				origin: oneOfEnum(MessageOrigin),
+				zone: "ABCDEF",
+				acknowledgement: oneOfEnum(MessageAcknowledgement),
+			} as Message)
+	);
 }
 
 let lastId = 0;
 
 export const useMessageStore = defineStore({
 	id: "message",
-	state: () => ({
-		messages: [
-			{
-				id: 0,
-				type: MessageType.Pushback,
-				origin: MessageOrigin.System,
-				planeId: "DX1212",
-				zone: "SCN Apron",
-			},
-			{
-				id: 1,
-				type: MessageType.RequestTaxi,
-				origin: MessageOrigin.ThisATC,
-				planeId: "DX1212",
-				zone: "SCN Apron",
-			},
-		] as Message[],
-	}),
+	state: () => {
+		const { planes } = usePlanesStore();
+		return {
+			messages: generateMessages(planes),
+		};
+	},
 	getters: {
 		getMessagesByPlaneId: (state) => {
 			return (planeId: string) =>
