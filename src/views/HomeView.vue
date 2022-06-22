@@ -4,7 +4,7 @@ import MessagePushback from "@/components/MessagePushback.vue";
 import MessageRequestTaxi from "@/components/MessageRequestTaxi.vue";
 import ActivePlanes from "@/components/ActivePlanes.vue";
 import { MessageType, useMessageStore } from "@/stores/message";
-import { State, useStateStore } from "@/stores/state";
+import { useStateStore } from "@/stores/state";
 import type { Component } from "vue";
 
 const { messages } = useMessageStore();
