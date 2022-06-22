@@ -8,3 +8,53 @@
     font-display: swap;
     font-weight: 1 999;
 }
+
+.headContainer {
+    margin-top: 3.6vh;
+    margin-left: 2vw;
+    margin-bottom: 6vh;
+    display: flex;
+}
+
+.addButton {
+    border: 2px solid black;
+    border-radius: 10%;
+    font-size: 80px;
+    margin-right: 2vw;
+}
+
+.activePlanes {
+    width: 60vw;
+    margin-right: 2vw;
+}
+
+.leftContainer {
+    width: 72vw;
+}
+
+.divider {
+    border: 0;
+    border-right: 2px solid black;
+    padding-left: 38.5vw;
+}
+
+.headRightContainer {
+    padding-left: 6vw;
+    padding-top: 1vh;
+}
+
+.footRightContainer {
+    padding-left: 6vw;
+    padding-top: 1vh;
+}
+
+.rightContainer {
+    height: 92vh;
+    padding-left: 6vw;
+}
+
+.planeElement {
+    font-size: 30px;
+    padding-left: 18%;
+    padding-top: 1.2vh;
+}

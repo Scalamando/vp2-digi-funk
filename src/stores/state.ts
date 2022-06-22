@@ -1,48 +1,45 @@
 import { defineStore } from "pinia";
 
-export enum MessageType {
+export enum StateType {
 	Pushback = "PB",
 	RequestTaxi = "RT",
 	FlightLevel = "FL",
 }
 
-export enum MessageOrigin {
-	System,
-	Pilot,
-	ThisATC,
-	OtherATC,
+export enum AckState {
+    true,
+    false,
 }
 
-export interface Message {
+export interface State {
 	id: number;
 	planeId: string;
-	type: MessageType;
-	origin: MessageOrigin;
-	zone: string;
-	parameters?: Record<string, string | number>;
+	type: StateType;
+	atcAck: AckState;
+    pilotAck: AckState;
 }
 
 let lastId = 0;
 
-export const useMessageStore = defineStore({
-	id: "message",
+export const useStateStore = defineStore({
+	id: "state",
 	state: () => ({
 		messages: [
 			{
 				id: 0,
-				type: MessageType.Pushback,
-				origin: MessageOrigin.System,
+				type: StateType.Pushback,
 				planeId: "DX1212",
-				zone: "SCN Apron",
+                atcAck: AckState.true,
+                pilotAck: AckState.false,
 			},
 			{
 				id: 1,
-				type: MessageType.RequestTaxi,
-				origin: MessageOrigin.ThisATC,
+				type: StateType.RequestTaxi,
 				planeId: "DX1212",
-				zone: "SCN Apron",
+				atcAck: AckState.true,
+                pilotAck: AckState.true,
 			},
-		] as Message[],
+		] as State[],
 	}),
 	getters: {
 		getMessagesByPlaneId: (state) => {
@@ -55,8 +52,8 @@ export const useMessageStore = defineStore({
 		},
 	},
 	actions: {
-		addMessage(message: Omit<Message, "id">) {
-			this.messages.push({ ...message, id: lastId++ });
+		addMessage(state: Omit<State, "id">) {
+			this.messages.push({ ...state, id: lastId++ });
 			return this.messages.slice(-1);
 		},
 	},
