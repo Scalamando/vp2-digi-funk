@@ -1,34 +1,23 @@
 <script setup lang="ts">
-import { AckState, type State } from "@/stores/state";
-import { Icon } from "@iconify/vue";
-import BaseButton from "./BaseButton.vue";
+import type { Message } from "@/stores/message";
 
 defineProps<{
-	state: State;
+	message: Message;
 }>();
 
-function getIcon(origin: AckState) {
-	const iconIdentifier: Record<AckState, string> = {
-		[AckState.true]: "uil:check",
-		[AckState.false]: "uil:times",
-	};
-
-	return iconIdentifier[origin];
+function getIcon(acknowledged: boolean) {
+	return acknowledged ? "uil:check" : "uil:times";
 }
 </script>
 
 <template>
-	<div
-		class="grid p-3 gap-x-6 gap-y-2 grid-cols-[1fr_auto] border-y-4 text-lg"
-	>
+	<div class="grid p-3 gap-x-6 gap-y-2 grid-cols-[1fr_auto] border-y-4 text-lg">
 		<div class="flex items-center gap-2">
 			<p class="font-semibold">{{ message.type }}</p>
 			<p>{{ message.planeId }}</p>
-			<p>{{ message.atcAck }}</p>
-            <p>{{ message.pilotAck }}</p>
-			<slot></slot>
+			<p>{{ getIcon(message.acknowledgement === "ATC") }}</p>
+			<p>{{ getIcon(message.acknowledgement === "Pilot") }}</p>
 		</div>
-		<slot name="details" class="col-span-2"></slot>
 	</div>
 </template>
 
