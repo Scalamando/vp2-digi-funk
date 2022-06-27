@@ -5,6 +5,7 @@ import MessagePushback from "@/components/MessagePushback.vue";
 import MessageRequestTaxi from "@/components/MessageRequestTaxi.vue";
 import { MessageType, useMessageStore } from "@/stores/message";
 import type { Component } from "vue";
+import Summary from "../components/Summary.vue";
 
 const { messages } = useMessageStore();
 
@@ -16,6 +17,10 @@ function getMessageComponent(type: MessageType) {
 	};
 
 	return messageComponent[type];
+}
+
+compnents:{
+	Summary
 }
 </script>
 
@@ -40,8 +45,8 @@ function getMessageComponent(type: MessageType) {
 		<div>
 			<p class="headRightContainer">new</p>
 			<div class="grid grid-cols-none grid-rows-6 rightContainer">
-				<div v-for="message in messages">
-					{{ message.planeId }} {{ message.acknowledgement }}
+				<div v-for="message in messages" :key="message.id">
+					<Summary :message="message" />
 				</div>
 			</div>
 			<p class="footRightContainer">urgent</p>
