@@ -7,7 +7,7 @@ import { MessageType, useMessageStore } from "@/stores/message";
 import type { Component } from "vue";
 import Summary from "../components/Summary.vue";
 
-const { messages } = useMessageStore();
+const { messages, sentMessages, unsentMessages } = useMessageStore();
 
 function getMessageComponent(type: MessageType) {
 	const messageComponent: Record<MessageType, Component> = {
@@ -25,6 +25,7 @@ compnents:{
 </script>
 
 <template>
+<!--TODO: Watcher, weil wird nciht neu geladen, wenn veränderungen im store...-->
 	<main class="grid grid-cols-3 gap-1 place-content-stretch h-screen">
 		<div class="leftContainer">
 			<div class="headContainer">
@@ -33,8 +34,9 @@ compnents:{
 			</div>
 			<!--<h1 class="text-7xl text-center mb-6">DigiFunk&trade;</h1>-->
 			<div class="flex flex-col gap-2">
+				<!--TODO: subscribe store to update unsentMessages-List-->
 				<component
-					v-for="msg in messages"
+					v-for="msg in unsentMessages"
 					:is="getMessageComponent(msg.type)"
 					:message="msg"
 					:key="msg.id"
@@ -45,7 +47,8 @@ compnents:{
 		<div>
 			<p class="headRightContainer">new</p>
 			<div class="grid grid-cols-none grid-rows-6 rightContainer">
-				<div v-for="message in messages" :key="message.id">
+				<!--TODO: subscribe store to update sentMessages-List-->
+				<div v-for="message in sentMessages" :key="message.id">
 					<Summary :message="message" />
 				</div>
 			</div>

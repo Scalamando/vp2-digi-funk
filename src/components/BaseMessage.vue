@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { MessageOrigin, type Message } from "@/stores/message";
+import { MessageOrigin, type Message, useMessageStore } from "@/stores/message";
 import { Icon } from "@iconify/vue";
 import BaseButton from "./BaseButton.vue";
+
+const { acknowlegedByATC, deleteMessage } = useMessageStore();
 
 defineProps<{
 	message: Message;
@@ -57,10 +59,10 @@ function getIconColor(origin: MessageOrigin) {
 		</div>
 
 		<div class="flex gap-1">
-			<BaseButton class="!px-[4px]">
+			<BaseButton class="!px-[4px]"  @click="() => acknowlegedByATC(message.id)">
 				<Icon icon="uil:check" class="h-5 w-5 scale-110" />
 			</BaseButton>
-			<BaseButton class="!px-[4px]">
+			<BaseButton class="!px-[4px]" @click="() => deleteMessage(message.id)">
 				<Icon icon="uil:times" class="h-5 w-5 scale-110" />
 			</BaseButton>
 		</div>
