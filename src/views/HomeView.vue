@@ -5,9 +5,11 @@ import MessagePushback from "@/components/MessagePushback.vue";
 import MessageRequestTaxi from "@/components/MessageRequestTaxi.vue";
 import { MessageType, useMessageStore } from "@/stores/message";
 import type { Component } from "vue";
+import { storeToRefs } from 'pinia';
 import Summary from "../components/Summary.vue";
 
-const { messages, sentMessages, unsentMessages } = useMessageStore();
+const messageStore = useMessageStore();
+const { messages, sentMessages, unsentMessages } = storeToRefs(messageStore);
 
 function getMessageComponent(type: MessageType) {
 	const messageComponent: Record<MessageType, Component> = {
@@ -25,7 +27,6 @@ compnents:{
 </script>
 
 <template>
-<!--TODO: Watcher, weil wird nciht neu geladen, wenn veränderungen im store...-->
 	<main class="grid grid-cols-3 gap-1 place-content-stretch h-screen">
 		<div class="leftContainer">
 			<div class="headContainer">
@@ -34,7 +35,6 @@ compnents:{
 			</div>
 			<!--<h1 class="text-7xl text-center mb-6">DigiFunk&trade;</h1>-->
 			<div class="flex flex-col gap-2">
-				<!--TODO: subscribe store to update unsentMessages-List-->
 				<component
 					v-for="msg in unsentMessages"
 					:is="getMessageComponent(msg.type)"
@@ -47,7 +47,6 @@ compnents:{
 		<div>
 			<p class="headRightContainer">new</p>
 			<div class="grid grid-cols-none grid-rows-6 rightContainer">
-				<!--TODO: subscribe store to update sentMessages-List-->
 				<div v-for="message in sentMessages" :key="message.id">
 					<Summary :message="message" />
 				</div>
