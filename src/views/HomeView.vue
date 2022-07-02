@@ -3,6 +3,7 @@ import ActivePlanes from "@/components/ActivePlanes.vue";
 import MessageFlightLevel from "@/components/MessageFlightLevel.vue";
 import MessagePushback from "@/components/MessagePushback.vue";
 import MessageRequestTaxi from "@/components/MessageRequestTaxi.vue";
+import AddNewMessageVue from "@/components/AddNewMessage.vue";
 import { MessageType, useMessageStore } from "@/stores/message";
 import type { Component } from "vue";
 
@@ -17,13 +18,19 @@ function getMessageComponent(type: MessageType) {
 
 	return messageComponent[type];
 }
+
+function onClick(ev: Event) { 
+ console.log(ev);
+ 
+ }
+
 </script>
 
 <template>
 	<main class="grid grid-cols-3 gap-1 place-content-stretch h-screen">
 		<div class="leftContainer">
 			<div class="headContainer">
-				<button class="addButton w-32 h-32">+</button>
+				<button class="addButton w-32 h-32" @click="onClick">+</button>
 				<active-planes class="h-32"> </active-planes>
 			</div>
 			<!--<h1 class="text-7xl text-center mb-6">DigiFunk&trade;</h1>-->
@@ -49,3 +56,5 @@ function getMessageComponent(type: MessageType) {
 	</main>
 </template>
 
+	
+	
