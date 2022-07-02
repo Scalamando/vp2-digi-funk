@@ -5,6 +5,7 @@ export enum MessageType {
 	Pushback = "PB",
 	RequestTaxi = "RT",
 	FlightLevel = "FL",
+    Generic = "GT"
 }
 
 export enum MessageOrigin {
@@ -46,7 +47,7 @@ function generateMessages(planes: Plane[]) {
 				planeId: oneOfArr(planes).id,
 				type: oneOfEnum(MessageType),
 				origin: oneOfEnum(MessageOrigin),
-				zone: "ABCDEF",
+				zone: "SCN Apron",
 				acknowledgement: oneOfEnum(MessageAcknowledgement),
 			} as Message)
 	);
