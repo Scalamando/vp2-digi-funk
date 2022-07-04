@@ -5,8 +5,11 @@ import MessagePushback from "@/components/MessagePushback.vue";
 import MessageRequestTaxi from "@/components/MessageRequestTaxi.vue";
 import { MessageType, useMessageStore } from "@/stores/message";
 import type { Component } from "vue";
+import { storeToRefs } from 'pinia';
+import Summary from "../components/Summary.vue";
 
-const { messages } = useMessageStore();
+const messageStore = useMessageStore();
+const { messages, sentMessages, unsentMessages } = storeToRefs(messageStore);
 
 function getMessageComponent(type: MessageType) {
 	const messageComponent: Record<MessageType, Component> = {
@@ -16,6 +19,10 @@ function getMessageComponent(type: MessageType) {
 	};
 
 	return messageComponent[type];
+}
+
+compnents:{
+	Summary
 }
 </script>
 
@@ -29,7 +36,7 @@ function getMessageComponent(type: MessageType) {
 			<!--<h1 class="text-7xl text-center mb-6">DigiFunk&trade;</h1>-->
 			<div class="flex flex-col gap-2">
 				<component
-					v-for="msg in messages"
+					v-for="msg in unsentMessages"
 					:is="getMessageComponent(msg.type)"
 					:message="msg"
 					:key="msg.id"
@@ -40,8 +47,8 @@ function getMessageComponent(type: MessageType) {
 		<div>
 			<p class="headRightContainer">new</p>
 			<div class="grid grid-cols-none grid-rows-6 rightContainer">
-				<div v-for="message in messages">
-					{{ message.planeId }} {{ message.acknowledgement }}
+				<div v-for="message in sentMessages" :key="message.id">
+					<Summary :message="message" />
 				</div>
 			</div>
 			<p class="footRightContainer">urgent</p>

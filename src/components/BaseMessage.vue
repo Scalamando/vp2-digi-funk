@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { MessageOrigin, type Message } from "@/stores/message";
+import { MessageOrigin, type Message, useMessageStore } from "@/stores/message";
 import { Icon } from "@iconify/vue";
 import BaseButton from "./BaseButton.vue";
+
+const { acknowlegedByATC, deleteMessage } = useMessageStore();
 
 defineProps<{
 	message: Message;
@@ -13,6 +15,7 @@ function getColors(origin: MessageOrigin) {
 		[MessageOrigin.Pilot]: "border-purple-400 bg-purple-50",
 		[MessageOrigin.ThisATC]: "border-orange-400 bg-orange-50",
 		[MessageOrigin.OtherATC]: "border-lime-400 bg-lime-50",
+		[MessageOrigin.Error]: "border-red-400 bg-red-50",
 	};
 
 	return colorStyles[origin];
@@ -24,6 +27,7 @@ function getIcon(origin: MessageOrigin) {
 		[MessageOrigin.Pilot]: "bxs:plane-alt",
 		[MessageOrigin.ThisATC]: "bxs:user",
 		[MessageOrigin.OtherATC]: "bxs:user-voice",
+		[MessageOrigin.Error]: "bxs:error",
 	};
 
 	return iconIdentifier[origin];
@@ -35,6 +39,7 @@ function getIconColor(origin: MessageOrigin) {
 		[MessageOrigin.Pilot]: "bg-purple-400",
 		[MessageOrigin.ThisATC]: "bg-orange-400",
 		[MessageOrigin.OtherATC]: "bg-lime-400",
+		[MessageOrigin.Error]: "bg-red-400",
 	};
 
 	return iconColor[origin];
@@ -57,10 +62,10 @@ function getIconColor(origin: MessageOrigin) {
 		</div>
 
 		<div class="flex gap-1">
-			<BaseButton class="!px-[4px]">
+			<BaseButton class="!px-[4px]"  @click="() => acknowlegedByATC(message.id)">
 				<Icon icon="uil:check" class="h-5 w-5 scale-110" />
 			</BaseButton>
-			<BaseButton class="!px-[4px]">
+			<BaseButton class="!px-[4px]" @click="() => deleteMessage(message.id)">
 				<Icon icon="uil:times" class="h-5 w-5 scale-110" />
 			</BaseButton>
 		</div>

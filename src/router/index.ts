@@ -1,3 +1,4 @@
+import HistorieView from '@/views/HistorieView.vue';
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 
@@ -9,6 +10,11 @@ const router = createRouter({
       name: 'home',
       component: HomeView
     },
+    {
+      path: '/historie',
+      name: 'historie',
+      component: HistorieView
+    }
   ]
 })
 
