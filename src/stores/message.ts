@@ -12,6 +12,7 @@ export enum MessageOrigin {
 	Pilot = "Pilot",
 	ThisATC = "ThisATC",
 	OtherATC = "OtherATC",
+	Error = "Error",
 }
 
 export enum MessageAcknowledgement {
@@ -134,11 +135,19 @@ export const useMessageStore = defineStore({
 		 */
 		acknowlegedByBoth(messageId:number){
 			this.messages.forEach(message =>{
-				if(message.id === messageId){
+				if(message.id === messageId){					
 					message.acknowledgement = MessageAcknowledgement.Both;
 					console.log('acknowleged:', messageId, message.acknowledgement)
+					message.origin = MessageOrigin.Error;
 					return
 				}
+				// use this to create an error message
+				/*if(message.id === messageId){					
+					message.acknowledgement = MessageAcknowledgement.NotSent;
+					console.log('refused:', messageId, message.acknowledgement)
+					message.origin = MessageOrigin.Error;
+					return
+				}*/
 			})
 		},
 		/**
