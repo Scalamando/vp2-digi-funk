@@ -8,9 +8,10 @@ import MessageRequestTaxi from "@/components/MessageRequestTaxi.vue";
 import { MessageType, useMessageStore } from "@/stores/message";
 import { storeToRefs } from "pinia";
 import { ref, type Component } from "vue";
+import Summary from "../components/Summary.vue";
 
 const messageStore = useMessageStore();
-const { messages } = storeToRefs(messageStore);
+const { messages, sentMessages, unsentMessages } = storeToRefs(messageStore);
 
 function getMessageComponent(type: MessageType) {
 	const messageComponent: Record<MessageType, Component> = {
@@ -27,7 +28,7 @@ const isAddingNewMessage = ref(false);
 </script>
 
 <template>
-	<main class="grid grid-cols-[1fr_200px] gap-1 place-content-stretch h-screen">
+	<main class="grid grid-cols-[1fr_350px] gap-1 place-content-stretch h-screen">
 		<div class="border-r border-gray-900 grid grid-rows-[auto_1fr]">
 			<div class="flex p-6">
 				<button
@@ -53,8 +54,8 @@ const isAddingNewMessage = ref(false);
 		<div class="p-6 grid grid-cols-1 h-full grid-rows-[auto_1fr_auto]">
 			<p>new</p>
 			<div class="grid grid-cols-1 grid-rows-6">
-				<div v-for="message in messages">
-					{{ message.planeId }} {{ message.acknowledgement }}
+				<div v-for="message in sentMessages" :key="message.id">
+					<Summary :message="message" />
 				</div>
 			</div>
 			<p>urgent</p>
