@@ -1,35 +1,37 @@
 <script setup lang="ts">
 import MarkingMenu from "marking-menu";
+import type { Observable } from "rxjs";
 import { onMounted, onUnmounted, ref } from "vue";
 
 const props = defineProps<{
-    options: string[]
+	options: string[];
 }>();
-const emit = defineEmits(['select']);
+const emit = defineEmits(["select"]);
 
 const markingEl = ref<HTMLDivElement>();
-const markingMenu = ref();
+const markingMenu = ref<Observable<{name: string}>>();
 const markingMenuSubscription = ref();
 
 onMounted(() => {
-	markingMenu.value = MarkingMenu(
-		props.options,
-		markingEl.value
-	);
+    if(!markingEl.value) return;
 
-	markingMenuSubscription.value = markingMenu.value.subscribe(
-		(selection: { name: string }) => {
-			emit('select', selection.name)
+	markingMenu.value = MarkingMenu(props.options, markingEl.value);
+
+	markingMenuSubscription.value = markingMenu.value!.subscribe(
+		({ name }) => {
+			emit("select", name);
 		}
 	);
 });
 
 onUnmounted(() => {
-    markingMenuSubscription.value.unsubscribe();
-})
+	markingMenuSubscription.value.unsubscribe();
+});
 </script>
 
 <template>
-	<div class="w-full bg-white" ref="markingEl"></div>
+	<Teleport to="body">
+		<div class="absolute inset-0 z-0" ref="markingEl"></div>
+	</Teleport>
 </template>
 
