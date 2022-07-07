@@ -30,6 +30,8 @@ export interface Message {
 	origin: MessageOrigin;
 	zone: string;
 	acknowledgement: MessageAcknowledgement;
+	acknowledgementATC: String;
+	acknowledgementPilot: String;
 	parameters?: Record<string, string | number>;
 }
 
@@ -103,7 +105,7 @@ export const useMessageStore = defineStore({
 		getMessageById: (state) => {
 			return (messageId: number) =>
 				state.messages.find((msg) => msg.id === messageId);
-		},
+		}
 	},
 	actions: {
 		/**
@@ -112,7 +114,7 @@ export const useMessageStore = defineStore({
 		 * @returns 
 		 */
 		addMessage(message: Omit<Message, "id">) {
-			this.messages.push({ ...message, id: lastId++ });
+			this.messages.push({ ...message,id: lastId++ });
 			return this.messages.slice(-1);
 		},
 		/**
@@ -122,9 +124,9 @@ export const useMessageStore = defineStore({
 		acknowlegedByATC(messageId:number) {
 			this.messages.forEach(message =>{
 				if(message.id === messageId){
-					console.log('acknowleged:', messageId, message.acknowledgement)
 					message.acknowledgement = MessageAcknowledgement.ATC;
 					console.log('acknowleged:', messageId, message.acknowledgement)
+					message.acknowledgementATC = new Date().getHours() + ' : ' + new Date().getMinutes()
 					this.setTimerForAcknolegementBoth(messageId);
 					return
 				}
@@ -139,6 +141,7 @@ export const useMessageStore = defineStore({
 				if(message.id === messageId){					
 					message.acknowledgement = MessageAcknowledgement.Both;
 					console.log('acknowleged:', messageId, message.acknowledgement)
+					message.acknowledgementPilot = new Date().getHours() + ' : ' + new Date().getMinutes()
 					message.origin = MessageOrigin.Error;
 					return
 				}
@@ -156,9 +159,11 @@ export const useMessageStore = defineStore({
 		 * @param messageId of the acknowleged message
 		 */
 		setTimerForAcknolegementBoth(messageId:number){
+			var time = Math.random()*10000
+			console.log(time)
 			interval = setTimeout(() => {
 				this.acknowlegedByBoth(messageId)
-			  }, 3000)	
+			  }, time)	
 		},
 		/**
 		 * deletes the message with the given id in the messages-list
@@ -168,9 +173,27 @@ export const useMessageStore = defineStore({
 			for(let index = 0; index < this.messages.length; index++) {
 				if(this.messages[index].id === messageId){
 					this.messages.splice(index,1)
-					console.log('deleted:', this.messages)
 				}
 			}
+		},
+		/**
+		 * @param type of the message
+		 * @returns String which is the full name of the request
+		 */
+		getTitle (type: String) {
+			var title = "Generic"
+			switch (type) {
+				case 'PB': 
+					title = 'Pushback'; 
+					break;
+				case 'RT': 
+					title = 'Request Taxi'; 
+					break;
+				case 'FL': 
+					title = 'Flight Level'; 
+					break;
+	 		}
+			return title
 		}
 	},
 });
