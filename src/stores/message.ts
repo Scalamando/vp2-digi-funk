@@ -1,12 +1,158 @@
 import { defineStore } from "pinia";
 import { usePlanesStore, type Plane } from "./planes";
 
-export enum MessageType {
-	Pushback = "PB",
-	RequestTaxi = "RT",
-	FlightLevel = "FL",
-    Generic = "GT"
+export enum FlightState {
+	Cruise = "Cruise",
+	Depature = "Depature",
+	Arrival = "Arrival",
 }
+
+export enum Parameter {
+	Limit = "Limit",
+	Instruments = "Instruments",
+	HoldingPoint = "HoldingPoint",
+	Taxiway = "Taxiway",
+	Information = "Information",
+	State = "State",
+	Direction = "Direction",
+}
+
+export const ParameterName = <const>{
+	[Parameter.Limit]: "Limit",
+	[Parameter.Instruments]: "Instruments",
+	[Parameter.HoldingPoint]: "Holding Point",
+	[Parameter.Taxiway]: "Taxiway",
+	[Parameter.Information]: "Information",
+	[Parameter.State]: "State",
+	[Parameter.Direction]: "Direction",
+};
+
+export const ParameterValues = <const>{
+	[Parameter.Limit]: ["2000", "4000", "6000", "8000"],
+	[Parameter.Instruments]: ["Instrument Depature", "Visual Departure"],
+	[Parameter.HoldingPoint]: ["26R", "26L"],
+	[Parameter.Taxiway]: ["Golf", "Foxtrot", "Romeo"],
+	[Parameter.Information]: [
+		"Bad Visual",
+		"High Traffic",
+		"High Turbulence",
+		"Wait until further instructions",
+	],
+	[Parameter.State]: [
+		"Pushback Approved",
+		"Pushback Declined",
+		"Hold for instructions",
+	],
+	[Parameter.Direction]: ["East", "South", "West", "North"],
+};
+
+export enum Action {
+	IC = "IC",
+	LI = "LI",
+	SC = "SC",
+	TI = "TI",
+	AA = "AA",
+	RI = "RI",
+	DC = "DC",
+	PB = "PB",
+	TC = "TC",
+	LC = "LC",
+	TP = "TP",
+	STO = "STO",
+	IA = "IA",
+	HP = "HP",
+	FA = "FA",
+	FAL = "FAL",
+	GAP = "GAP",
+	AL = "AL",
+}
+
+export const ActionName = <const>{
+	[Action.IC]: "IFR Initial Climb",
+	[Action.LI]: "Level Instructions",
+	[Action.SC]: "ATS Surveillance Clearance",
+	[Action.TI]: "Traffic Information",
+	[Action.AA]: "Avoiding Action",
+	[Action.RI]: "Radar Instruction",
+	[Action.DC]: "IFR Departure Clearance",
+	[Action.PB]: "Push Back Operation",
+	[Action.TC]: "Taxi Clearances",
+	[Action.LC]: "Line-Up Clearance",
+	[Action.TP]: "Take-Off Procedure",
+	[Action.STO]: "Special Take-Off Operation",
+	[Action.IA]: "IFR Initial Approach",
+	[Action.HP]: "Holding Procedures",
+	[Action.FA]: "IFR Final Approach",
+	[Action.FAL]: "Final Approach and Landing",
+	[Action.GAP]: "Go Around Procedure",
+	[Action.AL]: "After Landing",
+};
+
+export const ActionParameters = <const>{
+	[Action.IC]: null,
+	[Action.LI]: null,
+	[Action.SC]: null,
+	[Action.TI]: null,
+	[Action.AA]: null,
+	[Action.RI]: null,
+	[Action.DC]: [
+		Parameter.Limit,
+		Parameter.Instruments,
+		Parameter.HoldingPoint,
+		Parameter.Taxiway,
+		Parameter.Information,
+	],
+	[Action.PB]: [Parameter.State, Parameter.Direction],
+	[Action.TC]: [Parameter.HoldingPoint, Parameter.Taxiway],
+	[Action.LC]: null,
+	[Action.TP]: null,
+	[Action.STO]: null,
+	[Action.IA]: null,
+	[Action.HP]: null,
+	[Action.FA]: null,
+	[Action.FAL]: null,
+	[Action.GAP]: null,
+	[Action.AL]: null,
+};
+
+export const FlightStateAction = <const>{
+	[FlightState.Cruise]: [
+		Action.IC,
+		Action.LI,
+		Action.SC,
+		Action.TI,
+		Action.AA,
+		Action.RI,
+	],
+	[FlightState.Depature]: [
+		Action.DC,
+		Action.PB,
+		Action.TC,
+		Action.LC,
+		Action.TP,
+		Action.STO,
+	],
+	[FlightState.Arrival]: [
+		Action.IA,
+		Action.HP,
+		Action.FA,
+		Action.FAL,
+		Action.GAP,
+		Action.AL,
+	],
+};
+
+export type MessageActionParameter = {
+	id: Parameter;
+	name: typeof ParameterName[Parameter];
+	value: typeof ParameterValues[Parameter][number];
+};
+
+export type MessageAction = {
+	id: Action;
+	name: typeof ActionName[Action];
+	parameter: MessageActionParameter | null;
+};
 
 export enum MessageOrigin {
 	System = "System",
@@ -26,11 +172,10 @@ export enum MessageAcknowledgement {
 export interface Message {
 	id: number;
 	planeId: string;
-	type: MessageType;
+	action: MessageAction;
 	origin: MessageOrigin;
 	zone: string;
 	acknowledgement: MessageAcknowledgement;
-	parameters?: Record<string, string | number>;
 }
 
 /**
@@ -46,13 +191,43 @@ function generateMessages(planes: Plane[]) {
 
 	const oneOfArr = <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
 
+	const oneOfAction = (): MessageAction => {
+		const actionId = oneOfEnum(Action);
+		const availableParameters = ActionParameters[actionId];
+
+		if (availableParameters !== null) {
+			const parameterId = oneOfArr(
+				availableParameters as unknown as Parameter[]
+			);
+
+			return {
+				id: actionId,
+				name: ActionName[actionId],
+				parameter: {
+					id: Parameter[parameterId],
+					name: ParameterName[parameterId],
+					value:
+						ParameterValues[parameterId][
+							Math.floor(Math.random() * ParameterValues[parameterId].length)
+						],
+				},
+			};
+		}
+
+		return {
+			id: actionId,
+			name: ActionName[actionId],
+			parameter: null,
+		};
+	};
+
 	return Array.from(
 		{ length: 3 },
 		() =>
 			({
 				id: lastId++,
 				planeId: oneOfArr(planes).id,
-				type: oneOfEnum(MessageType),
+				action: oneOfAction(),
 				origin: oneOfEnum(MessageOrigin),
 				zone: "SCN Apron",
 				acknowledgement: oneOfEnum(MessageAcknowledgement),
@@ -86,14 +261,20 @@ export const useMessageStore = defineStore({
 		 * @returns a list of all acknowledged messages (pilot or atc)
 		 */
 		sentMessages: (state) => {
-			return state.messages.filter((msg) => msg.acknowledgement !== MessageAcknowledgement.NotSent);
+			return state.messages.filter(
+				(msg) => msg.acknowledgement !== MessageAcknowledgement.NotSent
+			);
 		},
 		/**
 		 * @param state
 		 * @returns a list of all not acknowledged messages
 		 */
 		unsentMessages: (state) => {
-			return state.messages.filter((msg) => msg.acknowledgement === MessageAcknowledgement.NotSent || msg.acknowledgement === MessageAcknowledgement.Pilot);
+			return state.messages.filter(
+				(msg) =>
+					msg.acknowledgement === MessageAcknowledgement.NotSent ||
+					msg.acknowledgement === MessageAcknowledgement.Pilot
+			);
 		},
 		/**
 		 * TODO
@@ -115,32 +296,38 @@ export const useMessageStore = defineStore({
 			this.messages.push({ ...message, id: lastId++ });
 			return this.messages.slice(-1);
 		},
+
+		updateMessage(id: number, newMessage: Partial<Omit<Message, "id">>) {
+			const idx = this.messages.findIndex((msg) => msg.id === id);
+			this.messages[idx] = { ...this.messages[idx], ...newMessage };
+			return this.messages[idx];
+		},
 		/**
 		 * changes the acknowlegement to 'ATC'
 		 * @param messageId of the acknowleged message
 		 */
-		acknowlegedByATC(messageId:number) {
-			this.messages.forEach(message =>{
-				if(message.id === messageId){
-					console.log('acknowleged:', messageId, message.acknowledgement)
+		acknowlegedByATC(messageId: number) {
+			this.messages.forEach((message) => {
+				if (message.id === messageId) {
+					console.log("acknowleged:", messageId, message.acknowledgement);
 					message.acknowledgement = MessageAcknowledgement.ATC;
-					console.log('acknowleged:', messageId, message.acknowledgement)
+					console.log("acknowleged:", messageId, message.acknowledgement);
 					this.setTimerForAcknolegementBoth(messageId);
-					return
+					return;
 				}
-			})
+			});
 		},
 		/**
 		 * changes the acknowlegement to 'Both'
 		 * @param messageId of the acknowleged message
 		 */
-		acknowlegedByBoth(messageId:number){
-			this.messages.forEach(message =>{
-				if(message.id === messageId){
+		acknowlegedByBoth(messageId: number) {
+			this.messages.forEach((message) => {
+				if (message.id === messageId) {
 					message.acknowledgement = MessageAcknowledgement.Both;
-					console.log('acknowleged:', messageId, message.acknowledgement)
+					console.log("acknowleged:", messageId, message.acknowledgement);
 					message.origin = MessageOrigin.Error;
-					return
+					return;
 				}
 				// use this to create an error message
 				/*if(message.id === messageId){
@@ -149,29 +336,29 @@ export const useMessageStore = defineStore({
 					message.origin = MessageOrigin.Error;
 					return
 				}*/
-			})
+			});
 		},
 		/**
 		 * one countdown to simulate the answer of the pilot
 		 * @param messageId of the acknowleged message
 		 */
-		setTimerForAcknolegementBoth(messageId:number){
+		setTimerForAcknolegementBoth(messageId: number) {
 			interval = setTimeout(() => {
-				this.acknowlegedByBoth(messageId)
-			  }, 3000)
+				this.acknowlegedByBoth(messageId);
+			}, 3000);
 		},
 		/**
 		 * deletes the message with the given id in the messages-list
 		 * @param messageId of the deleted message
 		 */
-		deleteMessage(messageId:number){
-			for(let index = 0; index < this.messages.length; index++) {
-				if(this.messages[index].id === messageId){
-					this.messages.splice(index,1)
-					console.log('deleted:', this.messages)
+		deleteMessage(messageId: number) {
+			for (let index = 0; index < this.messages.length; index++) {
+				if (this.messages[index].id === messageId) {
+					this.messages.splice(index, 1);
+					console.log("deleted:", this.messages);
 				}
 			}
-		}
+		},
 	},
 });
 

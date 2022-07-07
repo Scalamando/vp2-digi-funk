@@ -13,7 +13,7 @@ function getIcon(acknowledged: boolean) {
 <template>
 	<div class="grid p-3 gap-x-6 gap-y-2 grid-cols-[1fr_auto] border-y-4 text-lg">
 		<div class="flex items-center gap-2">
-			<p class="font-semibold">{{ message.type }}</p>
+			<p class="font-semibold">{{ message.action }}</p>
 			<p>{{ message.planeId }}</p>
 			<p>{{ getIcon(message.acknowledgement === "ATC") }}</p>
 			<p>{{ getIcon(message.acknowledgement === "Pilot") }}</p>

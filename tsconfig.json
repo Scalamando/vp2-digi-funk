@@ -7,7 +7,7 @@
 			"@/*": ["./src/*"]
 		},
 		"target": "ESNext",
-		"lib": ["ESNext"],
+		"lib": ["ESNext", "DOM"],
         "typeRoots": [
             "src/@types",
             "node_modules/@types"

@@ -1,28 +1,14 @@
 <script setup lang="ts">
 import ActivePlanes from "@/components/ActivePlanes.vue";
 import AddNewMessage from "@/components/AddNewMessage.vue";
-import MessageFlightLevel from "@/components/MessageFlightLevel.vue";
-import MessageGeneric from "@/components/MessageGeneric.vue";
-import MessagePushback from "@/components/MessagePushback.vue";
-import MessageRequestTaxi from "@/components/MessageRequestTaxi.vue";
-import { MessageType, useMessageStore } from "@/stores/message";
+import { useMessageStore } from "@/stores/message";
 import { storeToRefs } from "pinia";
-import { ref, type Component } from "vue";
+import { ref } from "vue";
+import BaseMessage from "../components/BaseMessage.vue";
 import Summary from "../components/Summary.vue";
 
 const messageStore = useMessageStore();
-const { messages, sentMessages, unsentMessages } = storeToRefs(messageStore);
-
-function getMessageComponent(type: MessageType) {
-	const messageComponent: Record<MessageType, Component> = {
-		[MessageType.Pushback]: MessagePushback,
-		[MessageType.RequestTaxi]: MessageRequestTaxi,
-		[MessageType.FlightLevel]: MessageFlightLevel,
-		[MessageType.Generic]: MessageGeneric,
-	};
-
-	return messageComponent[type];
-}
+const { sentMessages, unsentMessages } = storeToRefs(messageStore);
 
 const isAddingNewMessage = ref(false);
 </script>
@@ -30,21 +16,20 @@ const isAddingNewMessage = ref(false);
 <template>
 	<main class="grid grid-cols-[1fr_350px] gap-1 place-content-stretch h-screen">
 		<div class="border-r border-gray-900 grid grid-rows-[auto_1fr]">
-			<div class="flex p-6">
+			<div class="flex p-6 gap-6 border-b border-gray-900 mb-2">
 				<button
-					class="addButton w-32 h-32"
+					class="outline-2 outline outline-black rounded-lg h-32 w-32 flex-none hover:bg-gray-200"
+                    :class="{'bg-orange-400 hover:bg-orange-300' : isAddingNewMessage}"
 					@click="() => (isAddingNewMessage = true)"
 				>
-					+
+					<span class="text-8xl leading-[0.55]">+</span>
 				</button>
 				<active-planes class="h-32"> </active-planes>
 			</div>
-			<!--<h1 class="text-7xl text-center mb-6">DigiFunk&trade;</h1>-->
 			<div class="flex flex-col gap-2">
-				<component
+				<BaseMessage
 					v-if="!isAddingNewMessage"
 					v-for="msg in unsentMessages"
-					:is="getMessageComponent(msg.type)"
 					:message="msg"
 					:key="msg.id"
 				/>

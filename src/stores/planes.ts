@@ -9,7 +9,7 @@ function generatePlanes(): Plane[] {
 		(Math.random() + 1)
 			.toString(36)
 			.substring(8)
-			.replace(/\d/g, "")
+			.replace(/\d/g, "").slice(0, 3)
 			.toUpperCase();
 	const randomNumber = () => Math.ceil(Math.random() * 9000) + 1000;
 

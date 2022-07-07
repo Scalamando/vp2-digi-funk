@@ -3,7 +3,7 @@
 		class="outline outline-2 grid grid-cols-[0.5fr_0.25fr_0.25fr] place-items-center"
 	>
 		<div class="flex">
-            <p class="mr-2">{{ message.type }}:</p>
+            <p class="mr-2">{{ message.action.id }}:</p>
             <p>{{ message.planeId }}</p>
         </div>
 		<p
