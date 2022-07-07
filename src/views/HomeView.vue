@@ -43,7 +43,7 @@ const isAddingNewMessage = ref(false);
 			<div class="flex flex-col gap-2">
 				<component
 					v-if="!isAddingNewMessage"
-					v-for="msg in messages"
+					v-for="msg in unsentMessages"
 					:is="getMessageComponent(msg.type)"
 					:message="msg"
 					:key="msg.id"
