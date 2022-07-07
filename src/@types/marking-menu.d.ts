@@ -1,9 +1,19 @@
 declare module "marking-menu" {
 	import type { Observable } from "rxjs";
 
-	type Options = Array<string | string[]>;
+	export type MarkingMenuSubItem = {
+		name: string;
+		children: string[] | MarkingMenuSubItem;
+	};
+	export type MarkingMenuItem = string | MarkingMenuSubItem;
+	export type MarkingMenuItems = Array<MarkingMenuItem>;
 
-	const constructor: (options: Options, element: HTMLElement) => Observable;
+	export type MarkingMenuObservable = Observable<{ name: string }>;
+
+	const constructor: (
+		items: MarkingMenuItems,
+		element: HTMLElement
+	) => MarkingMenuObservable;
 
 	export default constructor;
 }

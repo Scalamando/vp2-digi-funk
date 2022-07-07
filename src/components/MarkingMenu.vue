@@ -1,27 +1,27 @@
 <script setup lang="ts">
-import MarkingMenu from "marking-menu";
-import type { Observable } from "rxjs";
+import MarkingMenu, {
+type MarkingMenuItems,
+type MarkingMenuObservable
+} from "marking-menu";
 import { onMounted, onUnmounted, ref } from "vue";
 
 const props = defineProps<{
-	options: string[];
+	options: MarkingMenuItems;
 }>();
 const emit = defineEmits(["select"]);
 
 const markingEl = ref<HTMLDivElement>();
-const markingMenu = ref<Observable<{name: string}>>();
+const markingMenu = ref<MarkingMenuObservable>();
 const markingMenuSubscription = ref();
 
 onMounted(() => {
-    if(!markingEl.value) return;
+	if (!markingEl.value) return;
 
 	markingMenu.value = MarkingMenu(props.options, markingEl.value);
 
-	markingMenuSubscription.value = markingMenu.value!.subscribe(
-		({ name }) => {
-			emit("select", name);
-		}
-	);
+	markingMenuSubscription.value = markingMenu.value!.subscribe(({ name }) => {
+		emit("select", name);
+	});
 });
 
 onUnmounted(() => {
