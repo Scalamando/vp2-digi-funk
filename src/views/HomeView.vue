@@ -56,7 +56,7 @@ const isAddingNewMessage = ref(false);
 		<div class="p-6 grid grid-cols-1 h-full grid-rows-[auto_1fr_auto]">
 			<p>
 				new
-				<BaseButton @click="() => $router.push('/historie')"> 
+				<BaseButton @click="() => $router.push('/historie')" class="absolute top-0 right-0"> 
 					<Icon icon="fluent:history-20-filled" class="h-10 w-10" /> 
 				</BaseButton>
 			</p> 

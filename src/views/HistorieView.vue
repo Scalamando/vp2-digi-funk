@@ -17,36 +17,70 @@
         return colorStyles[origin];
     }
 
+    /**
+     * get's the time with leading zeros an a slight difference for demonstration
+     * @param count a number to randomize the shown time
+     */
+    function getTime(count:number){
+        let timeString = "new"
+        let hours = new Date().getHours()
+        let minutes = new Date().getMinutes()-(7*count)
+
+        // so we don't get negative minutes
+        if(minutes < 0){
+            minutes = 60 + minutes
+            hours = hours - 1
+        }
+
+        // add the hours to the string
+        timeString = hours + ' : '
+        if(hours < 10){
+            timeString = '0' + hours + ' : '
+        }
+
+        // add the minutes
+        if(minutes < 10){
+            timeString = timeString + '0' + minutes
+        } else {
+            timeString = timeString + minutes
+        }
+
+        return timeString
+    }
+
 </script>
 
 <template>
     <main >
-        <BaseButton @click="() => $router.push('/')"> 
-            <Icon icon="fluent:history-dismiss-20-filled" class="h-10 w-10" /> 
-        </BaseButton>
-        <!--TODO: umändern in jedes Mal adden, wenn Freigabe gesendet mit Zeit-->
+        <p class="h-10 p-3">
+            new
+            <BaseButton @click="() => $router.push('/historie')" class="absolute top-0 right-0"> 
+                <Icon icon="fluent:history-dismiss-20-filled" class="h-10 w-10" /> 
+            </BaseButton>
+        </p> 
+       
         <div v-for="message in sentMessages" :key="message.id" class="grid grid-cols-11 gap-3 place-content-stretch p-3 ">
             <div class="col-start-1 col-span-1"> 
-                {{new Date().getHours()}} :  {{new Date().getMinutes()}}
+                {{getTime(message.id)}}
             </div>
             <div class="col-start-2 col-span-5 border-2 rounded-md grid grid-cols-7 gap-1 place-items-center p-1" 
                 :class="getColors(message.origin)">
                 <p class="col-start-1 col-span-2"> {{message.planeId}}: </p>
                 <p class="col-start-3 col-span-1"> {{ useMessageStore().getTitle(message.type) }} in </p>
                 <p class="col-start-4 col-span-2"> {{message.zone}}</p>
-                <p class="col-start-6 col-span-1  text-center px-3 border-x-2"
+                <div class="col-start-6 col-span-1  text-center px-3 border-x-2"
                     :class="getColors(message.origin)">
-                    A 
-                    <Icon v-if="message.acknowledgement === 'ATC' || message.acknowledgement === 'Both'" icon="uil:check" class="h-5 w-5" />
-                    <Icon v-else icon="bxs:hourglass" class="h-5 w-5" />
-                    {{message.acknowledgementATC}}
-                </p>
+                    <p>A</p> 
+                    <Icon v-if="message.acknowledgement === 'ATC' || message.acknowledgement === 'Both'" icon="uil:check" class="h-5 w-5 mx-auto" />
+                    <Icon v-else icon="bxs:hourglass" class="h-5 w-5 mx-auto" />
+                     <p>{{message.acknowledgementATC}}</p>
+                </div>
                 <p class="col-start-7 col-span-1 text-center px-3 border-x-2"
                     :class="getColors(message.origin)">
-                    P 
-                    <Icon v-if="message.acknowledgement === 'Pilot' || message.acknowledgement === 'Both'" icon="uil:check" class="h-5 w-5" />
-                    <Icon v-else icon="bxs:hourglass" class="h-5 w-5" />
-                    {{message.acknowledgementPilot}}
+                    <p>P</p>  
+                    <Icon v-if="message.acknowledgement === 'Pilot' || message.acknowledgement === 'Both'" icon="uil:check" class="h-5 w-5 mx-auto" />
+                    <Icon v-else icon="bxs:hourglass" class="h-5 w-5 mx-auto" />
+                    <p>{{message.acknowledgementPilot}}</p>
                 </p>
             </div>
             <div class="col-start-7 col-span-5 border-2 rounded-md">

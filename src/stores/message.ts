@@ -125,8 +125,8 @@ export const useMessageStore = defineStore({
 			this.messages.forEach(message =>{
 				if(message.id === messageId){
 					message.acknowledgement = MessageAcknowledgement.ATC;
-					console.log('acknowleged:', messageId, message.acknowledgement)
-					message.acknowledgementATC = new Date().getHours() + ' : ' + new Date().getMinutes()
+					//console.log('acknowleged:', messageId, message.acknowledgement)
+					message.acknowledgementATC = this.calculateTime()
 					this.setTimerForAcknolegementBoth(messageId);
 					return
 				}
@@ -140,8 +140,8 @@ export const useMessageStore = defineStore({
 			this.messages.forEach(message =>{
 				if(message.id === messageId){					
 					message.acknowledgement = MessageAcknowledgement.Both;
-					console.log('acknowleged:', messageId, message.acknowledgement)
-					message.acknowledgementPilot = new Date().getHours() + ' : ' + new Date().getMinutes()
+					//console.log('acknowleged:', messageId, message.acknowledgement)
+					message.acknowledgementPilot = this.calculateTime()
 					message.origin = MessageOrigin.Error;
 					return
 				}
@@ -160,7 +160,7 @@ export const useMessageStore = defineStore({
 		 */
 		setTimerForAcknolegementBoth(messageId:number){
 			var time = Math.random()*10000
-			console.log(time)
+			//console.log(time)
 			interval = setTimeout(() => {
 				this.acknowlegedByBoth(messageId)
 			  }, time)	
@@ -194,6 +194,29 @@ export const useMessageStore = defineStore({
 					break;
 	 		}
 			return title
+		},
+		/**
+		 * @returns the time in a String with leading zeros
+		 */
+		calculateTime () {
+			let timeString = "new"
+			let hours = new Date().getHours()
+			let minutes = new Date().getMinutes()
+	
+			// add the hours to the string
+			timeString = hours + ' : '
+			if(hours < 10){
+				timeString = '0' + hours + ' : '
+			}
+	
+			// add the minutes
+			if(minutes < 10){
+				timeString = timeString + '0' + minutes
+			} else {
+				timeString = timeString + minutes
+			}
+	
+			return timeString
 		}
 	},
 });
