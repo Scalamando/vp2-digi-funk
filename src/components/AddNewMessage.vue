@@ -46,6 +46,60 @@ const actionsPerFlighState = {
 	],
 };
 
+const actionDepartureClearance = {
+	[DepartureClearance.Limit]: [
+		"2000",
+		"4000",
+		"6000",
+		"8000",
+	],
+	[DepartureClearance.Instruments]: [
+		"Instrument Departure",
+		"Visual Departure",
+	],
+	[DepartureClearance.HoldingPoint]: [
+		"26R",
+		"26L",
+	],
+	[DepartureClearance.Taxiway]: [
+		"Golf",
+		"Foxtrot",
+		"Romeo",
+	],
+	[DepartureClearance.Information]: [
+		"Bad Visual",
+		"High Traffic",
+		"High Turbulence",
+		"Wait until further instructions",
+	],
+};
+
+const actionPushback = {
+	[Pushback.State]: [
+		"Pushback Approved",
+		"Pushback Declined",
+		"Hold for instructions"
+	],
+	[Pushback.Direction]: [
+		"North",
+		"Easet",
+		"South",
+		"West",
+	],
+};
+
+const actionRequestTaxi = {
+	[RequestTaxi.HoldingPoint]: [
+		"26R",
+		"26L",
+	],
+	[RequestTaxi.Taxiway]: [
+		"Golf",
+		"Foxtrot",
+		"Romeo",
+	],
+};
+
 const selectedAircraft = ref<Plane>();
 function selectAircraft(plane: Plane) {
 	selectedAircraft.value = plane;

@@ -139,7 +139,6 @@ export const useMessageStore = defineStore({
 				if(message.id === messageId){					
 					message.acknowledgement = MessageAcknowledgement.Both;
 					console.log('acknowleged:', messageId, message.acknowledgement)
-					message.origin = MessageOrigin.Error;
 					return
 				}
 				// use this to create an error message
