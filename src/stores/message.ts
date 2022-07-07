@@ -35,8 +35,8 @@ export interface Message {
 
 /**
  * TODO
- * @param planes 
- * @returns 
+ * @param planes
+ * @returns
  */
 function generateMessages(planes: Plane[]) {
 	const oneOfEnum = <T>(obj: T) => {
@@ -74,31 +74,31 @@ export const useMessageStore = defineStore({
 	getters: {
 		/**
 		 * TODO
-		 * @param state 
-		 * @returns 
+		 * @param state
+		 * @returns
 		 */
 		getMessagesByPlaneId: (state) => {
 			return (planeId: string) =>
 				state.messages.filter((msg) => msg.planeId === planeId);
 		},
 		/**
-		 * @param state 
+		 * @param state
 		 * @returns a list of all acknowledged messages (pilot or atc)
 		 */
 		sentMessages: (state) => {
 			return state.messages.filter((msg) => msg.acknowledgement !== MessageAcknowledgement.NotSent);
 		},
 		/**
-		 * @param state 
+		 * @param state
 		 * @returns a list of all not acknowledged messages
 		 */
 		unsentMessages: (state) => {
-			return state.messages.filter((msg) => msg.acknowledgement === MessageAcknowledgement.NotSent);
+			return state.messages.filter((msg) => msg.acknowledgement === MessageAcknowledgement.NotSent || msg.acknowledgement === MessageAcknowledgement.Pilot);
 		},
 		/**
 		 * TODO
-		 * @param state 
-		 * @returns 
+		 * @param state
+		 * @returns
 		 */
 		getMessageById: (state) => {
 			return (messageId: number) =>
@@ -108,8 +108,8 @@ export const useMessageStore = defineStore({
 	actions: {
 		/**
 		 * TODO: description
-		 * @param message 
-		 * @returns 
+		 * @param message
+		 * @returns
 		 */
 		addMessage(message: Omit<Message, "id">) {
 			this.messages.push({ ...message, id: lastId++ });
@@ -136,14 +136,14 @@ export const useMessageStore = defineStore({
 		 */
 		acknowlegedByBoth(messageId:number){
 			this.messages.forEach(message =>{
-				if(message.id === messageId){					
+				if(message.id === messageId){
 					message.acknowledgement = MessageAcknowledgement.Both;
 					console.log('acknowleged:', messageId, message.acknowledgement)
 					message.origin = MessageOrigin.Error;
 					return
 				}
 				// use this to create an error message
-				/*if(message.id === messageId){					
+				/*if(message.id === messageId){
 					message.acknowledgement = MessageAcknowledgement.NotSent;
 					console.log('refused:', messageId, message.acknowledgement)
 					message.origin = MessageOrigin.Error;
@@ -158,7 +158,7 @@ export const useMessageStore = defineStore({
 		setTimerForAcknolegementBoth(messageId:number){
 			interval = setTimeout(() => {
 				this.acknowlegedByBoth(messageId)
-			  }, 3000)	
+			  }, 3000)
 		},
 		/**
 		 * deletes the message with the given id in the messages-list
