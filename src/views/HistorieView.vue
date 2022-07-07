@@ -54,7 +54,7 @@
     <main >
         <p class="h-10 p-3">
             new
-            <BaseButton @click="() => $router.push('/historie')" class="absolute top-0 right-0"> 
+            <BaseButton @click="() => $router.push('/')" class="absolute top-0 right-0"> 
                 <Icon icon="fluent:history-dismiss-20-filled" class="h-10 w-10" /> 
             </BaseButton>
         </p> 
