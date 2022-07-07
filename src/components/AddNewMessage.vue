@@ -81,7 +81,7 @@ function selectAction(action: string) {
 	<div
 		class="grid grid-rows-[auto_1fr] p-3 gap-y-2 border-y-4 text-lg border-orange-400 bg-orange-50 h-full"
 	>
-		<div class="grid grid-cols-[auto_1fr_auto] place-self-start gap-x-6 w-full">
+		<div class="grid grid-cols-[auto_1fr_auto] place-self-start gap-x-6 w-full z-50">
 			<div class="rounded-full p-1.5 bg-orange-400">
 				<Icon icon="bxs:user" class="h-5 w-5" />
 			</div>
