@@ -6,6 +6,8 @@ import { storeToRefs } from "pinia";
 import { ref } from "vue";
 import BaseMessage from "../components/BaseMessage.vue";
 import Summary from "../components/Summary.vue";
+import { Icon } from "@iconify/vue";
+import BaseButton from "@/components/BaseButton.vue";
 
 const messageStore = useMessageStore();
 const { sentMessages, unsentMessages } = storeToRefs(messageStore);
@@ -37,7 +39,12 @@ const isAddingNewMessage = ref(false);
 			</div>
 		</div>
 		<div class="p-6 grid grid-cols-1 h-full grid-rows-[auto_1fr_auto]">
-			<p>new</p>
+			<p>
+				new
+				<BaseButton @click="() => $router.push('/historie')" class="absolute top-0 right-0"> 
+					<Icon icon="fluent:history-20-filled" class="h-10 w-10" /> 
+				</BaseButton>
+			</p> 
 			<div class="grid grid-cols-1 grid-rows-6">
 				<div v-for="message in sentMessages" :key="message.id">
 					<Summary :message="message" />

@@ -176,6 +176,8 @@ export interface Message {
 	origin: MessageOrigin;
 	zone: string;
 	acknowledgement: MessageAcknowledgement;
+	acknowledgementATC: String;
+	acknowledgementPilot: String;
 }
 
 /**
@@ -284,7 +286,7 @@ export const useMessageStore = defineStore({
 		getMessageById: (state) => {
 			return (messageId: number) =>
 				state.messages.find((msg) => msg.id === messageId);
-		},
+		}
 	},
 	actions: {
 		/**
@@ -293,7 +295,7 @@ export const useMessageStore = defineStore({
 		 * @returns
 		 */
 		addMessage(message: Omit<Message, "id">) {
-			this.messages.push({ ...message, id: lastId++ });
+			this.messages.push({ ...message,id: lastId++ });
 			return this.messages.slice(-1);
 		},
 
@@ -306,12 +308,12 @@ export const useMessageStore = defineStore({
 		 * changes the acknowlegement to 'ATC'
 		 * @param messageId of the acknowleged message
 		 */
-		acknowlegedByATC(messageId: number) {
-			this.messages.forEach((message) => {
-				if (message.id === messageId) {
-					console.log("acknowleged:", messageId, message.acknowledgement);
+		acknowlegedByATC(messageId:number) {
+			this.messages.forEach(message =>{
+				if(message.id === messageId){
 					message.acknowledgement = MessageAcknowledgement.ATC;
-					console.log("acknowleged:", messageId, message.acknowledgement);
+					//console.log('acknowleged:', messageId, message.acknowledgement)
+					message.acknowledgementATC = this.calculateTime()
 					this.setTimerForAcknolegementBoth(messageId);
 					return;
 				}
@@ -325,7 +327,8 @@ export const useMessageStore = defineStore({
 			this.messages.forEach((message) => {
 				if (message.id === messageId) {
 					message.acknowledgement = MessageAcknowledgement.Both;
-					console.log("acknowleged:", messageId, message.acknowledgement);
+					//console.log('acknowleged:', messageId, message.acknowledgement)
+					message.acknowledgementPilot = this.calculateTime()
 					message.origin = MessageOrigin.Error;
 					return;
 				}
@@ -342,23 +345,66 @@ export const useMessageStore = defineStore({
 		 * one countdown to simulate the answer of the pilot
 		 * @param messageId of the acknowleged message
 		 */
-		setTimerForAcknolegementBoth(messageId: number) {
+		setTimerForAcknolegementBoth(messageId:number){
+			var time = Math.random()*10000
+			//console.log(time)
 			interval = setTimeout(() => {
-				this.acknowlegedByBoth(messageId);
-			}, 3000);
+				this.acknowlegedByBoth(messageId)
+			  }, time)
 		},
 		/**
 		 * deletes the message with the given id in the messages-list
 		 * @param messageId of the deleted message
 		 */
-		deleteMessage(messageId: number) {
-			for (let index = 0; index < this.messages.length; index++) {
-				if (this.messages[index].id === messageId) {
-					this.messages.splice(index, 1);
-					console.log("deleted:", this.messages);
+		deleteMessage(messageId:number){
+			for(let index = 0; index < this.messages.length; index++) {
+				if(this.messages[index].id === messageId){
+					this.messages.splice(index,1)
 				}
 			}
 		},
+		/**
+		 * @param type of the message
+		 * @returns String which is the full name of the request
+		 */
+		getTitle (type: String) {
+			var title = "Generic"
+			switch (type) {
+				case 'PB':
+					title = 'Pushback';
+					break;
+				case 'RT':
+					title = 'Request Taxi';
+					break;
+				case 'FL':
+					title = 'Flight Level';
+					break;
+	 		}
+			return title
+		},
+		/**
+		 * @returns the time in a String with leading zeros
+		 */
+		calculateTime () {
+			let timeString = "new"
+			let hours = new Date().getHours()
+			let minutes = new Date().getMinutes()
+
+			// add the hours to the string
+			timeString = hours + ' : '
+			if(hours < 10){
+				timeString = '0' + hours + ' : '
+			}
+
+			// add the minutes
+			if(minutes < 10){
+				timeString = timeString + '0' + minutes
+			} else {
+				timeString = timeString + minutes
+			}
+
+			return timeString
+		}
 	},
 });
 
