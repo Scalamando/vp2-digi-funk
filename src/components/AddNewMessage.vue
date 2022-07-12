@@ -5,9 +5,7 @@ import {
 ActionName,
 ActionParameters,
 FlightState,
-FlightStateAction,
-MessageAcknowledgement,
-MessageOrigin,
+FlightStateAction, MessageOrigin,
 ParameterName,
 ParameterValues,
 useMessageStore,
@@ -74,7 +72,6 @@ function selectAction(selectionId: string) {
 
 function confirmSelection() {
 	messageStore.addMessage({
-		acknowledgement: MessageAcknowledgement.NotSent,
 		origin: MessageOrigin.ThisATC,
 		planeId: selectedAircraft.value!.id,
 		action: selectedAction.value!,

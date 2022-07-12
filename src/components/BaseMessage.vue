@@ -10,7 +10,7 @@ import { computed, nextTick, ref } from "vue";
 import BaseButton from "./BaseButton.vue";
 import MarkingMenu from "./MarkingMenu.vue";
 
-const { acknowlegedByATC, deleteMessage, updateMessage } = useMessageStore();
+const { acknowledge, deleteMessage, updateMessage } = useMessageStore();
 
 const props = defineProps<{
 	message: Message;
@@ -119,7 +119,10 @@ function getIconColor(origin: MessageOrigin) {
 		</div>
 
 		<div class="flex gap-1">
-			<BaseButton class="!px-[4px]" @click="() => acknowlegedByATC(message.id)">
+			<BaseButton
+				class="!px-[4px]"
+				@click="() => acknowledge(message.id)?.with('ATC')"
+			>
 				<Icon icon="uil:check" class="h-5 w-5 scale-110" />
 			</BaseButton>
 			<BaseButton class="!px-[4px]" @click="() => deleteMessage(message.id)">

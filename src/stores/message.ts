@@ -175,9 +175,34 @@ export interface Message {
 	action: MessageAction;
 	origin: MessageOrigin;
 	zone: string;
-	acknowledgement: MessageAcknowledgement;
-	acknowledgementATC: String;
-	acknowledgementPilot: String;
+	sent: Date | null;
+	acknowledgedByATC: Date | null;
+	acknowledgedByPilot: Date | null;
+}
+
+export function getActionName(action: Action) {
+	return ActionName[action];
+}
+
+export function getActionParameters(action: Action) {
+	return ActionParameters[action];
+}
+
+export function getParameterName(param: Parameter) {
+	return ParameterName[param];
+}
+
+export function getPossibleParameterValues(param: Parameter) {
+	return ParameterValues[param];
+}
+
+export function getTimeStamp(date: Date) {
+	return date.toLocaleTimeString([], {
+		hour12: false,
+		hour: "2-digit",
+		minute: "2-digit",
+		second: "2-digit",
+	});
 }
 
 /**
@@ -232,14 +257,20 @@ function generateMessages(planes: Plane[]) {
 				action: oneOfAction(),
 				origin: oneOfEnum(MessageOrigin),
 				zone: "SCN Apron",
-				acknowledgement: oneOfEnum(MessageAcknowledgement),
+				sent: null,
+				acknowledgedByATC: null,
+				acknowledgedByPilot: null,
 			} as Message)
 	);
 }
 
-let lastId = 0;
-var interval = null;
+type Key = string | number | symbol;
+type PartialSome<T, K extends Key & keyof T> = Omit<T, K> & Partial<T>;
+type NonNullableSome<T, K extends Key & keyof T> = Omit<T, K> & {
+	[IK in K]: NonNullable<T[IK]>;
+};
 
+let lastId = 0;
 export const useMessageStore = defineStore({
 	id: "message",
 	state: () => {
@@ -250,161 +281,84 @@ export const useMessageStore = defineStore({
 	},
 	getters: {
 		/**
-		 * TODO
-		 * @param state
-		 * @returns
-		 */
-		getMessagesByPlaneId: (state) => {
-			return (planeId: string) =>
-				state.messages.filter((msg) => msg.planeId === planeId);
-		},
-		/**
 		 * @param state
 		 * @returns a list of all acknowledged messages (pilot or atc)
 		 */
 		sentMessages: (state) => {
 			return state.messages.filter(
-				(msg) => msg.acknowledgement !== MessageAcknowledgement.NotSent
-			);
+				(msg) => msg.sent !== null
+			) as NonNullableSome<Message, "sent">[];
 		},
 		/**
 		 * @param state
 		 * @returns a list of all not acknowledged messages
 		 */
 		unsentMessages: (state) => {
-			return state.messages.filter(
-				(msg) =>
-					msg.acknowledgement === MessageAcknowledgement.NotSent ||
-					msg.acknowledgement === MessageAcknowledgement.Pilot
-			);
+			return state.messages.filter((msg) => !msg.sent);
 		},
-		/**
-		 * TODO
-		 * @param state
-		 * @returns
-		 */
 		getMessageById: (state) => {
 			return (messageId: number) =>
 				state.messages.find((msg) => msg.id === messageId);
-		}
+		},
 	},
 	actions: {
-		/**
-		 * TODO: description
-		 * @param message
-		 * @returns
-		 */
-		addMessage(message: Omit<Message, "id">) {
-			this.messages.push({ ...message,id: lastId++ });
+		addMessage(
+			message: PartialSome<
+				Omit<Message, "id">,
+				"acknowledgedByATC" | "acknowledgedByPilot" | "sent"
+			>
+		) {
+			this.messages.push({
+				acknowledgedByATC: null,
+				acknowledgedByPilot: null,
+				sent: null,
+				...message,
+				id: lastId++,
+			});
 			return this.messages.slice(-1);
 		},
-
 		updateMessage(id: number, newMessage: Partial<Omit<Message, "id">>) {
 			const idx = this.messages.findIndex((msg) => msg.id === id);
 			this.messages[idx] = { ...this.messages[idx], ...newMessage };
 			return this.messages[idx];
 		},
+		deleteMessage(messageId: number) {
+			const idx = this.messages.findIndex((msg) => msg.id === messageId);
+			return this.messages.splice(idx, 1);
+		},
 		/**
 		 * changes the acknowlegement to 'ATC'
 		 * @param messageId of the acknowleged message
 		 */
-		acknowlegedByATC(messageId:number) {
-			this.messages.forEach(message =>{
-				if(message.id === messageId){
-					message.acknowledgement = MessageAcknowledgement.ATC;
-					//console.log('acknowleged:', messageId, message.acknowledgement)
-					message.acknowledgementATC = this.calculateTime()
-					this.setTimerForAcknolegementBoth(messageId);
-					return;
-				}
-			});
-		},
-		/**
-		 * changes the acknowlegement to 'Both'
-		 * @param messageId of the acknowleged message
-		 */
-		acknowlegedByBoth(messageId: number) {
-			this.messages.forEach((message) => {
-				if (message.id === messageId) {
-					message.acknowledgement = MessageAcknowledgement.Both;
-					//console.log('acknowleged:', messageId, message.acknowledgement)
-					message.acknowledgementPilot = this.calculateTime()
-					message.origin = MessageOrigin.Error;
-					return;
-				}
-				// use this to create an error message
-				/*if(message.id === messageId){
-					message.acknowledgement = MessageAcknowledgement.NotSent;
-					console.log('refused:', messageId, message.acknowledgement)
-					message.origin = MessageOrigin.Error;
-					return
-				}*/
-			});
+		acknowledge(messageId: number) {
+			const message = this.messages.find((msg) => msg.id === messageId);
+			if (!message) return null;
+
+			const now = new Date();
+
+			return {
+				with: (party: "Pilot" | "ATC") => {
+					if (party === "Pilot") {
+						message.acknowledgedByPilot = now;
+					} else {
+						message.acknowledgedByATC = now;
+						this.simulatePilotAcknowledgement(messageId);
+					}
+					if (message.sent === null) message.sent = now;
+
+					return message;
+				},
+			};
 		},
 		/**
 		 * one countdown to simulate the answer of the pilot
 		 * @param messageId of the acknowleged message
 		 */
-		setTimerForAcknolegementBoth(messageId:number){
-			var time = Math.random()*10000
-			//console.log(time)
-			interval = setTimeout(() => {
-				this.acknowlegedByBoth(messageId)
-			  }, time)
+		simulatePilotAcknowledgement(messageId: number) {
+			setTimeout(() => {
+				this.acknowledge(messageId)?.with("Pilot");
+			}, Math.random() * 10000);
 		},
-		/**
-		 * deletes the message with the given id in the messages-list
-		 * @param messageId of the deleted message
-		 */
-		deleteMessage(messageId:number){
-			for(let index = 0; index < this.messages.length; index++) {
-				if(this.messages[index].id === messageId){
-					this.messages.splice(index,1)
-				}
-			}
-		},
-		/**
-		 * @param type of the message
-		 * @returns String which is the full name of the request
-		 */
-		getTitle (type: String) {
-			var title = "Generic"
-			switch (type) {
-				case 'PB':
-					title = 'Pushback';
-					break;
-				case 'RT':
-					title = 'Request Taxi';
-					break;
-				case 'FL':
-					title = 'Flight Level';
-					break;
-	 		}
-			return title
-		},
-		/**
-		 * @returns the time in a String with leading zeros
-		 */
-		calculateTime () {
-			let timeString = "new"
-			let hours = new Date().getHours()
-			let minutes = new Date().getMinutes()
-
-			// add the hours to the string
-			timeString = hours + ' : '
-			if(hours < 10){
-				timeString = '0' + hours + ' : '
-			}
-
-			// add the minutes
-			if(minutes < 10){
-				timeString = timeString + '0' + minutes
-			} else {
-				timeString = timeString + minutes
-			}
-
-			return timeString
-		}
 	},
 });
 
