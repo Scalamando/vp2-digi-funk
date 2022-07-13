@@ -88,7 +88,7 @@ export const ActionName = <const>{
 	[Action.AL]: "After Landing",
 };
 
-export const ActionParameters = <const>{
+export const ActionParameters = <Record<Action, Parameter[] | null>>{
 	[Action.IC]: null,
 	[Action.LI]: null,
 	[Action.SC]: null,
@@ -104,7 +104,7 @@ export const ActionParameters = <const>{
 	],
 	[Action.PB]: [Parameter.State, Parameter.Direction],
 	[Action.TC]: [Parameter.HoldingPoint, Parameter.Taxiway],
-	[Action.LC]: null,
+	[Action.LC]: [Parameter.HoldingPoint],
 	[Action.TP]: null,
 	[Action.STO]: null,
 	[Action.IA]: null,
@@ -162,13 +162,6 @@ export enum MessageOrigin {
 	Error = "Error",
 }
 
-export enum MessageAcknowledgement {
-	NotSent = "NotSent",
-	Pilot = "Pilot",
-	ATC = "ATC",
-	Both = "Both",
-}
-
 export interface Message {
 	id: number;
 	planeId: string;
@@ -176,8 +169,12 @@ export interface Message {
 	origin: MessageOrigin;
 	zone: string;
 	sent: Date | null;
+	executed: boolean;
 	acknowledgedByATC: Date | null;
 	acknowledgedByPilot: Date | null;
+	onAcknowledgedByATC?: (msg: Message) => void;
+	onAcknowledgedByPilot?: (msg: Message) => void;
+	onSent?: (msg: Message) => void;
 }
 
 export function getActionName(action: Action) {
@@ -205,63 +202,88 @@ export function getTimeStamp(date: Date) {
 	});
 }
 
-/**
- * TODO
- * @param planes
- * @returns
- */
-function generateMessages(planes: Plane[]) {
-	const oneOfEnum = <T>(obj: T) => {
-		const values = Object.values(obj) as T[keyof T][];
-		return values[Math.floor(Math.random() * values.length)];
-	};
+export function oneOfArr<T>(arr: T[]) {
+	return arr[Math.floor(Math.random() * arr.length)];
+}
 
-	const oneOfArr = <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
-
-	const oneOfAction = (): MessageAction => {
-		const actionId = oneOfEnum(Action);
-		const availableParameters = ActionParameters[actionId];
-
-		if (availableParameters !== null) {
-			const parameterId = oneOfArr(
-				availableParameters as unknown as Parameter[]
-			);
-
-			return {
-				id: actionId,
-				name: ActionName[actionId],
-				parameter: {
-					id: Parameter[parameterId],
-					name: ParameterName[parameterId],
-					value:
-						ParameterValues[parameterId][
-							Math.floor(Math.random() * ParameterValues[parameterId].length)
-						],
-				},
-			};
-		}
-
+export function oneOfAction<P extends Parameter>(
+	actionId: Action,
+	paramId?: P,
+	paramVal?: typeof ParameterValues[P][number]
+): MessageAction {
+	if (paramId) {
 		return {
 			id: actionId,
 			name: ActionName[actionId],
-			parameter: null,
+			parameter: {
+				id: Parameter[paramId],
+				name: ParameterName[paramId],
+				value:
+					paramVal ??
+					ParameterValues[paramId][
+						Math.floor(Math.random() * ParameterValues[paramId].length)
+					],
+			},
 		};
-	};
+	}
 
-	return Array.from(
-		{ length: 3 },
-		() =>
-			({
-				id: lastId++,
-				planeId: oneOfArr(planes).id,
-				action: oneOfAction(),
-				origin: oneOfEnum(MessageOrigin),
-				zone: "SCN Apron",
-				sent: null,
-				acknowledgedByATC: null,
-				acknowledgedByPilot: null,
-			} as Message)
-	);
+	return {
+		id: actionId,
+		name: ActionName[actionId],
+		parameter: null,
+	};
+}
+
+function generateMessages(planes: Plane[]) {
+	function onPushbackAcknowledged(msg: Message) {
+		const messageStore = useMessageStore();
+		if (
+			msg.action.parameter?.value === "Hold for instructions" ||
+			msg.action.parameter?.value === "Pushback Declined"
+		) {
+			return setTimeout(
+				() =>
+					messageStore.addMessage({
+						planeId: msg.planeId,
+						action: oneOfAction(
+							Action.PB,
+							Parameter.State,
+							"Pushback Approved"
+						),
+						origin: MessageOrigin.Pilot,
+						sent: new Date(),
+						acknowledgedByATC: null,
+						acknowledgedByPilot: new Date(),
+						onAcknowledgedByATC: onPushbackAcknowledged,
+					}),
+				msg.action.parameter?.value === "Hold for instructions" ? 3000 : 10000
+			);
+		}
+
+		setTimeout(
+			() =>
+				messageStore.addMessage({
+					planeId: msg.planeId,
+					action: oneOfAction(Action.TC, Parameter.Taxiway, "Golf"),
+					origin: MessageOrigin.System,
+				}),
+			500
+		);
+	}
+
+	return [
+		{
+			id: lastId++,
+			planeId: oneOfArr(planes).id,
+			action: oneOfAction(Action.PB, Parameter.State, "Pushback Approved"),
+			origin: MessageOrigin.Pilot,
+			sent: new Date(),
+			zone: "SCN Apron",
+			acknowledgedByATC: null,
+			acknowledgedByPilot: new Date(),
+			onAcknowledgedByATC: onPushbackAcknowledged,
+		} as Message,
+	];
 }
 
 type Key = string | number | symbol;
@@ -281,20 +303,30 @@ export const useMessageStore = defineStore({
 	},
 	getters: {
 		/**
-		 * @param state
-		 * @returns a list of all acknowledged messages (pilot or atc)
+		 * A list of all messages that have been sent (by any party) and are still pending
+		 */
+		pendingMessages: (state) => {
+			return state.messages
+				.filter((msg) => msg.sent !== null && !msg.executed)
+				.sort(
+					(a, b) => b.sent!.valueOf() - a.sent!.valueOf()
+				) as NonNullableSome<Message, "sent">[];
+		},
+
+		/**
+		 * A list of all messages that have been completed
 		 */
 		sentMessages: (state) => {
 			return state.messages.filter(
 				(msg) => msg.sent !== null
 			) as NonNullableSome<Message, "sent">[];
 		},
+
 		/**
-		 * @param state
-		 * @returns a list of all not acknowledged messages
+		 * A list of all messages that have not yet been acknowledged by the user
 		 */
-		unsentMessages: (state) => {
-			return state.messages.filter((msg) => !msg.sent);
+		waitingForActionMessages: (state) => {
+			return state.messages.filter((msg) => msg.acknowledgedByATC === null);
 		},
 		getMessageById: (state) => {
 			return (messageId: number) =>
@@ -305,13 +337,19 @@ export const useMessageStore = defineStore({
 		addMessage(
 			message: PartialSome<
 				Omit<Message, "id">,
-				"acknowledgedByATC" | "acknowledgedByPilot" | "sent"
+				| "acknowledgedByATC"
+				| "acknowledgedByPilot"
+				| "sent"
+				| "zone"
+				| "executed"
 			>
 		) {
 			this.messages.push({
 				acknowledgedByATC: null,
 				acknowledgedByPilot: null,
 				sent: null,
+				zone: "SCN Apron",
+				executed: false,
 				...message,
 				id: lastId++,
 			});
@@ -326,9 +364,10 @@ export const useMessageStore = defineStore({
 			const idx = this.messages.findIndex((msg) => msg.id === messageId);
 			return this.messages.splice(idx, 1);
 		},
+
 		/**
-		 * changes the acknowlegement to 'ATC'
-		 * @param messageId of the acknowleged message
+		 * Acknowledges a message as either Pilot or ATC
+		 * @param messageId Id of the message to acknowledge
 		 */
 		acknowledge(messageId: number) {
 			const message = this.messages.find((msg) => msg.id === messageId);
@@ -337,27 +376,36 @@ export const useMessageStore = defineStore({
 			const now = new Date();
 
 			return {
-				with: (party: "Pilot" | "ATC") => {
+				as: (party: "Pilot" | "ATC") => {
 					if (party === "Pilot") {
 						message.acknowledgedByPilot = now;
+						message.onAcknowledgedByPilot?.(message);
 					} else {
 						message.acknowledgedByATC = now;
-						this.simulatePilotAcknowledgement(messageId);
+						message.onAcknowledgedByATC?.(message);
+						if (message.acknowledgedByPilot === null) {
+							this.simulatePilotAcknowledgement(messageId);
+						}
 					}
-					if (message.sent === null) message.sent = now;
+
+					if (message.sent === null) {
+						message.sent = now;
+						message.onSent?.(message);
+					}
 
 					return message;
 				},
 			};
 		},
+
 		/**
-		 * one countdown to simulate the answer of the pilot
-		 * @param messageId of the acknowleged message
+		 * Simulate a pilot acknowledgement in 0 - 10 seconds
+		 * @param messageId Id of the message to acknowledge
 		 */
 		simulatePilotAcknowledgement(messageId: number) {
 			setTimeout(() => {
-				this.acknowledge(messageId)?.with("Pilot");
-			}, Math.random() * 10000);
+				this.acknowledge(messageId)?.as("Pilot");
+			}, Math.random() * 8000 + 2000);
 		},
 	},
 });

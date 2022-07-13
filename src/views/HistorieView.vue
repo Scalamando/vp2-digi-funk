@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import BaseButton from "@/components/BaseButton.vue";
-import {
-getActionName,
-getTimeStamp,
-MessageOrigin,
-useMessageStore
-} from "@/stores/message";
+import { getTimeStamp, MessageOrigin, useMessageStore } from "@/stores/message";
 import { Icon } from "@iconify/vue";
 
 const { sentMessages } = useMessageStore();
@@ -48,16 +43,20 @@ function getColors(origin: MessageOrigin) {
 				<p class="data-label">Received</p>
 			</div>
 			<div
-				class="border-2 rounded-md grid grid-cols-[1fr_1fr_1fr_0.5fr_0.5fr] gap-1 place-items-center p-1"
+				class="border-2 rounded-md grid grid-cols-[1fr_1.5fr_1fr_0.5fr_0.5fr] gap-1 place-items-center p-1"
 				:class="getColors(message.origin)"
 			>
 				<div class="text-center">
 					<p class="data-value">{{ message.planeId }}</p>
 					<p class="data-label">Aircraft</p>
 				</div>
-				<div class="text-center">
-					<p class="data-value">
-						{{ getActionName(message.action.id) }} ({{ message.action.id }})
+				<div class="text-center space-y-1">
+					<p class="data-value whitespace-nowrap leading-none">
+						{{ message.action.name }} ({{ message.action.id }})
+					</p>
+					<p v-if="message.action.parameter" class="text-sm leading-none">
+						{{ message.action.parameter.name }}:
+						{{ message.action.parameter.value }}
 					</p>
 					<p class="data-label">Action</p>
 				</div>
@@ -66,7 +65,7 @@ function getColors(origin: MessageOrigin) {
 					<p class="data-label">Zone</p>
 				</div>
 				<div
-					class="text-center px-3 border-x-2"
+					class="text-center px-3 border-x-2 w-24"
 					:class="getColors(message.origin)"
 				>
 					<p>A</p>
@@ -85,7 +84,7 @@ function getColors(origin: MessageOrigin) {
 					</p>
 				</div>
 				<div
-					class="text-center px-3 border-x-2"
+					class="text-center px-3 border-x-2 w-24"
 					:class="getColors(message.origin)"
 				>
 					<p>P</p>

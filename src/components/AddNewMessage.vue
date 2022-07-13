@@ -5,7 +5,8 @@ import {
 ActionName,
 ActionParameters,
 FlightState,
-FlightStateAction, MessageOrigin,
+FlightStateAction,
+MessageOrigin,
 ParameterName,
 ParameterValues,
 useMessageStore,
@@ -71,37 +72,33 @@ function selectAction(selectionId: string) {
 }
 
 function confirmSelection() {
-	messageStore.addMessage({
-		origin: MessageOrigin.ThisATC,
-		planeId: selectedAircraft.value!.id,
-		action: selectedAction.value!,
-		zone: "SCN Apron",
-	});
+	setTimeout(
+		() =>
+			messageStore.addMessage({
+				origin: MessageOrigin.ThisATC,
+				planeId: selectedAircraft.value!.id,
+				action: selectedAction.value!,
+				zone: "SCN Apron",
+			}),
+		50
+	);
 
 	emit("close");
 }
 
 function getDetailsFromSelectionId(selectionId: string) {
-	const [flightStateId, actionId, parameterId, parameterValueId] =
-		selectionId.split("-");
+	const [flightStateId, actionId, parameterId, parameterValueId] = selectionId
+		.split("-")
+		.map((str) => Number(str));
 
-	const flightStateSelection = allActions[Number(flightStateId)];
+	const flightStateSelection = allActions[flightStateId];
 	const actionSelection =
-		FlightStateAction[flightStateSelection.name as FlightState][
-			Number(actionId)
-		];
-	const parameterSelection =
-		ActionParameters[actionSelection]?.[Number(parameterId)];
-	const parameterValueSelection = parameterSelection
-		? ParameterValues[parameterSelection][Number(parameterValueId)]
-		: undefined;
+		FlightStateAction[flightStateSelection.name][actionId];
 
-	console.log(
-		flightStateSelection,
-		actionSelection,
-		parameterSelection,
-		parameterValueSelection
-	);
+	const parameterSelection = ActionParameters[actionSelection]?.[parameterId];
+	const parameterValueSelection = parameterSelection
+		? ParameterValues[parameterSelection][parameterValueId]
+		: undefined;
 
 	return {
 		flightState: flightStateSelection.name as FlightState,
