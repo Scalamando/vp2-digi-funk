@@ -383,9 +383,8 @@ export const useMessageStore = defineStore({
 					} else {
 						message.acknowledgedByATC = now;
 						message.onAcknowledgedByATC?.(message);
-						if (message.acknowledgedByPilot === null) {
-							this.simulatePilotAcknowledgement(messageId);
-						}
+						message.acknowledgedByPilot = null;
+						this.simulatePilotAcknowledgement(messageId);
 					}
 
 					if (message.sent === null) {
@@ -405,7 +404,7 @@ export const useMessageStore = defineStore({
 		simulatePilotAcknowledgement(messageId: number) {
 			setTimeout(() => {
 				this.acknowledge(messageId)?.as("Pilot");
-			}, Math.random() * 8000 + 2000);
+			}, Math.random() * 4000 + 2000);
 		},
 	},
 });
