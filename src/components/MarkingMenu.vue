@@ -40,20 +40,20 @@ onUnmounted(() => {
 
 <style>
 .marking-menu {
-	--item-width: 240px;
-	--item-height: 32px;
-	--item-padding: 4px;
-	--item-font-size: 16px;
-	--menu-radius: 160px;
-	--item-radius: 20px;
-	--item-color: theme(colors.gray.900);
-	--active-item-color: theme(colors.white);
-	--item-background: theme(colors.gray.300);
-	--active-item-background: theme(colors.gray.600);
+	--item-width: 240px !important;
+	--item-height: 32px !important;
+	--item-padding: 4px !important;
+	--item-font-size: 16px !important;
+	--menu-radius: 160px !important;
+	--item-radius: 20px !important;
+	--item-color: theme(colors.gray.900) !important;
+	--active-item-color: theme(colors.white) !important;
+	--item-background: theme(colors.gray.300) !important;
+	--active-item-background: theme(colors.gray.600) !important;
 }
 
 .marking-menu-item .marking-menu-label {
-	line-height: 1.5;
+	line-height: 1.5 !important;
 }
 </style>
 
