@@ -1,13 +1,65 @@
 <script setup lang="ts">
-import { MessageOrigin, type Message, useMessageStore } from "@/stores/message";
+import {
+getTimeStamp,
+MessageOrigin,
+ParameterValues,
+useMessageStore,
+type Message
+} from "@/stores/message";
 import { Icon } from "@iconify/vue";
+import { computed, nextTick, ref } from "vue";
 import BaseButton from "./BaseButton.vue";
+import MarkingMenu from "./MarkingMenu.vue";
 
-const { acknowlegedByATC, deleteMessage } = useMessageStore();
+const { acknowledge, deleteMessage, updateMessage } = useMessageStore();
 
-defineProps<{
+const props = defineProps<{
 	message: Message;
 }>();
+
+enum Editing {
+	None,
+	ParameterValue,
+}
+
+const isEditing = ref(Editing.None);
+const items = computed(() => {
+	if (!props.message.action.parameter) return null;
+
+	if (isEditing.value === Editing.ParameterValue) {
+		return ParameterValues[
+			props.message.action.parameter.id
+		] as unknown as string[];
+	}
+
+	return null;
+});
+function handleUpdateParameterValue(selection: number) {
+	isEditing.value = Editing.None;
+	if (!props.message.action.parameter) return;
+
+	updateMessage(props.message.id, {
+		action: {
+			...props.message.action,
+			parameter: {
+				...props.message.action.parameter,
+				value: ParameterValues[props.message.action.parameter.id][selection],
+			},
+		},
+	});
+}
+
+function startEditing(e: PointerEvent) {
+	isEditing.value = Editing.ParameterValue;
+	nextTick(() =>
+		document.getElementById("marking-menu")?.dispatchEvent(
+			new MouseEvent("mousedown", {
+				clientX: e.clientX,
+				clientY: e.clientY,
+			})
+		)
+	);
+}
 
 function getColors(origin: MessageOrigin) {
 	const colorStyles: Record<MessageOrigin, string> = {
@@ -48,29 +100,52 @@ function getIconColor(origin: MessageOrigin) {
 
 <template>
 	<div
-		class="grid p-3 gap-x-6 gap-y-2 grid-cols-[1fr_auto] border-y-4 text-lg"
+		class="flex p-3 gap-6 justify-between border-y-4 text-lg w-full"
 		:class="getColors(message.origin)"
 	>
-		<div class="flex items-center gap-2">
+		<div class="flex items-center gap-3">
 			<div class="rounded-full p-1.5" :class="getIconColor(message.origin)">
 				<Icon :icon="getIcon(message.origin)" class="h-5 w-5" />
 			</div>
-			<p class="font-semibold">{{ message.type }}</p>
+			<p class="font-semibold">{{ message.action.id }}</p>
 			<p>{{ message.planeId }}</p>
 			<p>{{ message.zone }}</p>
-			<slot></slot>
+			<p v-if="message.sent" class="flex items-center text-sm">
+				<Icon icon="bx:time-five" />{{ getTimeStamp(message.sent) }}
+			</p>
+		</div>
+
+		<div v-if="message.action.parameter" class="flex gap-2">
+			<p>{{ message.action.parameter?.name }}</p>
+			<BaseButton @pointerdown="startEditing">{{
+				message.action.parameter?.value
+			}}</BaseButton>
 		</div>
 
 		<div class="flex gap-1">
-			<BaseButton class="!px-[4px]"  @click="() => acknowlegedByATC(message.id)">
+			<BaseButton
+				class="!px-[4px]"
+				@click="() => acknowledge(message.id)?.as('ATC')"
+			>
 				<Icon icon="uil:check" class="h-5 w-5 scale-110" />
 			</BaseButton>
-			<BaseButton class="!px-[4px]" @click="() => deleteMessage(message.id)">
+			<BaseButton
+				v-if="
+					message.origin === MessageOrigin.System ||
+					message.origin === MessageOrigin.ThisATC
+				"
+				class="!px-[4px]"
+				@click="() => deleteMessage(message.id)"
+			>
 				<Icon icon="uil:times" class="h-5 w-5 scale-110" />
 			</BaseButton>
 		</div>
-
-		<slot name="details" class="col-span-2"></slot>
+		<MarkingMenu
+			v-if="isEditing && items"
+			:items="items"
+			@select="handleUpdateParameterValue"
+			@cancel="() => (isEditing = Editing.None)"
+		/>
 	</div>
 </template>
 

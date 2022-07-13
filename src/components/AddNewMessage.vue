@@ -1,7 +1,17 @@
 <script setup lang="ts">
 import ActivePlanes from "@/components/ActivePlanes.vue";
 import MarkingMenu from "@/components/MarkingMenu.vue";
-import { MessageAcknowledgement, MessageOrigin, MessageType, useMessageStore } from "@/stores/message";
+import {
+ActionName,
+ActionParameters,
+FlightState,
+FlightStateAction,
+MessageOrigin,
+ParameterName,
+ParameterValues,
+useMessageStore,
+type MessageAction
+} from "@/stores/message";
 import type { Plane } from "@/stores/planes";
 import { Icon } from "@iconify/vue";
 import { ref } from "vue";
@@ -13,67 +23,89 @@ const messageStore = useMessageStore();
 
 const step = ref(0);
 
-enum FlightState {
-	Depature = "Depature",
-	Cruise = "Cruise",
-	Arrival = "Arrival",
-}
-
-const actionsPerFlighState = {
-	[FlightState.Depature]: [
-		"IFR Departure Clearance",
-		"Push Back Operation",
-		"Taxi Clearances",
-		"Line-Up Clearance",
-		"Take-Off Procedure",
-		"Special Take-Off Operation",
-	],
-	[FlightState.Cruise]: [
-		"IFR Initial Climb",
-		"Level Instructions",
-		"ATS Surveillance Clearance",
-		"Traffic Information",
-		"Avoiding Action",
-		"Radar Instruction",
-	],
-	[FlightState.Arrival]: [
-		"IFR Initial Approach",
-		"Holding Procedures",
-		"IFR Final Approach",
-		"Final Approach and Landing",
-		"Go Around Procedure",
-		"After Landing",
-	],
-};
+const allActions = [
+	FlightState.Cruise,
+	FlightState.Arrival,
+	FlightState.Cruise,
+	FlightState.Depature,
+].map((flightState) => ({
+	name: flightState,
+	children: FlightStateAction[flightState].map((action) =>
+		ActionParameters[action] !== null
+			? {
+					name: ActionName[action],
+					children: ActionParameters[action]!.map((param) => ({
+						name: ParameterName[param],
+						children: [...ParameterValues[param]],
+					})),
+			  }
+			: ActionName[action]
+	),
+}));
 
 const selectedAircraft = ref<Plane>();
+const selectedFlightState = ref<FlightState>();
+const selectedAction = ref<MessageAction>();
+
 function selectAircraft(plane: Plane) {
 	selectedAircraft.value = plane;
 	step.value++;
 }
 
-const selectedFlightState = ref<FlightState>();
-function selectFlightState(selection: FlightState) {
-	console.log(selection);
+function selectAction(selectionId: string) {
+	const { flightState, action, parameter, parameterValue } =
+		getDetailsFromSelectionId(selectionId);
 
-	selectedFlightState.value = selection;
-	step.value++;
+	selectedFlightState.value = flightState;
+	selectedAction.value = {
+		id: action,
+		name: ActionName[action],
+		parameter:
+			parameter && parameterValue
+				? {
+						id: parameter,
+						name: ParameterName[parameter],
+						value: parameterValue,
+				  }
+				: null,
+	};
 }
 
-const selectedAction = ref();
-function selectAction(action: string) {
-    selectedAction.value = action;
+function confirmSelection() {
+	setTimeout(
+		() =>
+			messageStore.addMessage({
+				origin: MessageOrigin.ThisATC,
+				planeId: selectedAircraft.value!.id,
+				action: selectedAction.value!,
+				zone: "SCN Apron",
+			}),
+		50
+	);
 
-    messageStore.addMessage({
-        acknowledgement: MessageAcknowledgement.ATC,
-        origin: MessageOrigin.ThisATC,
-        planeId: selectedAircraft.value!.id,
-        type: MessageType.Generic,
-        zone: "SCN Apron",
-        parameters: {action: selectedAction.value}
-    });
+	emit("close");
+}
 
-    emit('close');
+function getDetailsFromSelectionId(selectionId: string) {
+	const [flightStateId, actionId, parameterId, parameterValueId] = selectionId
+		.split("-")
+		.map((str) => Number(str));
+
+	const flightStateSelection = allActions[flightStateId];
+	const actionSelection =
+		FlightStateAction[flightStateSelection.name][actionId];
+
+	const parameterSelection = ActionParameters[actionSelection]?.[parameterId];
+	const parameterValueSelection = parameterSelection
+		? ParameterValues[parameterSelection][parameterValueId]
+		: undefined;
+
+	return {
+		flightState: flightStateSelection.name as FlightState,
+		action: actionSelection,
+		parameter: parameterSelection,
+		parameterValue: parameterValueSelection,
+	};
 }
 </script>
 
@@ -81,43 +113,45 @@ function selectAction(action: string) {
 	<div
 		class="grid grid-rows-[auto_1fr] p-3 gap-y-2 border-y-4 text-lg border-orange-400 bg-orange-50 h-full"
 	>
-		<div class="grid grid-cols-[auto_1fr_auto] place-self-start gap-x-6 w-full">
+		<div
+			class="grid grid-cols-[auto_1fr_auto] place-self-start gap-x-6 w-full z-50"
+		>
 			<div class="rounded-full p-1.5 bg-orange-400">
 				<Icon icon="bxs:user" class="h-5 w-5" />
 			</div>
 			<div class="flex items-center gap-2">
-				<BaseButton>
+				<BaseButton @click="() => (step = 0)">
 					{{ selectedAircraft ? selectedAircraft.id : "Aircraft" }}
 				</BaseButton>
 				<BaseButton>
 					{{ selectedFlightState || "Flightstate" }}
 				</BaseButton>
-				<BaseButton>Action</BaseButton>
-				<BaseButton>Parameter</BaseButton>
+				<BaseButton>{{ selectedAction?.name || "Action" }}</BaseButton>
+				<BaseButton v-if="selectedAction?.parameter">
+					{{ selectedAction.parameter.name || "Parameter" }}:
+					{{ selectedAction.parameter.value }}
+				</BaseButton>
 			</div>
 
 			<div class="flex gap-1">
+				<BaseButton
+					v-if="selectedAircraft && selectedAction"
+					class="!px-[4px]"
+					@click="confirmSelection"
+				>
+					<Icon icon="uil:check" class="h-5 w-5 scale-110" />
+				</BaseButton>
 				<BaseButton class="!px-[4px]" @click="() => emit('close')">
 					<Icon icon="uil:times" class="h-5 w-5 scale-110" />
 				</BaseButton>
 			</div>
 		</div>
-		<div v-if="step === 0" class="flex justify-center items-center w-full">
+		<div v-if="step === 0" class="flex items-center w-full max-w-4xl mx-auto">
 			<ActivePlanes @select="selectAircraft" />
 		</div>
 		<MarkingMenu
-			v-else-if="step === 1"
-			:options="[
-				FlightState.Cruise,
-				FlightState.Arrival,
-				FlightState.Cruise,
-				FlightState.Depature,
-			]"
-			@select="selectFlightState"
-		/>
-		<MarkingMenu
-			v-else-if="step === 2 && selectedFlightState"
-			:options="actionsPerFlighState[selectedFlightState]"
+			v-else-if="step >= 1"
+			:items="allActions"
 			@select="selectAction"
 		/>
 	</div>
